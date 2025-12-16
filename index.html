@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Le Grimoire du Royaume DSI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Dancing+Script:wght@500;700&family=Mate+SC&display=swap" rel="stylesheet">
+    
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <style>
+        /* --- 1. BASE --- */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #050510; font-family: 'Mate SC', serif; color: #ecf0f1; }
+
+        #main-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 60% 40%, #1a0b2e 0%, #000000 90%);
+            z-index: 0;
+        }
+
+        /* --- 2. INTRO --- */
+        #intro {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #000; z-index: 3000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            transition: opacity 1.5s ease-in-out;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-leather.png');
+            overflow: hidden;
+        }
+        .intro-snow {
+            position: absolute; top: -10px; color: white; user-select: none; pointer-events: none;
+            animation: fall linear infinite; z-index: 1; text-shadow: 0 0 5px white;
+        }
+        @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
+
+        .book-cover {
+            position: relative; width: 700px; padding: 80px 50px; text-align: center; 
+            background: linear-gradient(135deg, #3e2723 0%, #1a1008 100%);
+            border: 4px double #ffd700; border-radius: 15px;
+            box-shadow: 0 0 100px rgba(197, 160, 89, 0.2), inset 0 0 80px rgba(0,0,0,0.9);
+            z-index: 10;
+        }
+        .corner { position: absolute; width: 50px; height: 50px; border: 4px solid #ffd700; border-radius: 5px; }
+        .tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+        .tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+        .bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+        .br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+        .intro-title { font-family: 'Cinzel Decorative', cursive; font-size: 4rem; color: #ffd700; margin-bottom: 20px; text-shadow: 0 0 25px #ffd700; }
+        .intro-subtitle { font-family: 'Dancing Script', cursive; font-size: 2.2rem; color: #e0d2b4; margin-bottom: 50px; }
+        .start-btn { 
+            padding: 18px 70px; background: transparent; color: #ffd700; 
+            border: 2px solid #ffd700; font-size: 1.4rem; cursor: pointer; 
+            font-family: 'Mate SC', serif; transition: 0.4s; letter-spacing: 3px;
+            box-shadow: 0 0 15px rgba(255,215,0,0.1);
+        }
+        .start-btn:hover { background: #ffd700; color: #2c1e12; box-shadow: 0 0 60px #ffd700; }
+
+        /* --- 3. HISTOIRE (SCROLL MANUEL) --- */
+        #story-sidebar {
+            position: fixed; top: 30px; left: 30px; bottom: 30px; width: 360px;
+            background: rgba(25, 20, 15, 0.95); border: 3px double #c5a059; border-radius: 15px;
+            box-shadow: 0 0 60px rgba(0,0,0,0.95); z-index: 5; padding: 0;
+            display: flex; flex-direction: column;
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+        }
+        
+        .sidebar-header {
+            padding: 20px; text-align: center; border-bottom: 2px solid #c5a059;
+            background: rgba(0,0,0,0.2); z-index: 2; flex-shrink: 0;
+        }
+        .sidebar-title { font-family: 'Cinzel Decorative', cursive; color: #ffd700; font-size: 1.8rem; margin: 0; text-shadow: 0 2px 4px black;}
+        
+        /* Zone de défilement MANUEL */
+        .scrolling-wrapper { 
+            flex-grow: 1; 
+            position: relative; 
+            overflow-y: auto; /* Active le scroll vertical */
+            padding: 20px;
+            /* Scrollbar personnalisée */
+            scrollbar-width: thin;
+            scrollbar-color: #c5a059 #1a1008;
+        }
+
+        /* Style de la scrollbar (Webkit / Chrome) */
+        .scrolling-wrapper::-webkit-scrollbar { width: 8px; }
+        .scrolling-wrapper::-webkit-scrollbar-track { background: #1a1008; }
+        .scrolling-wrapper::-webkit-scrollbar-thumb { background-color: #c5a059; border-radius: 4px; border: 1px solid #000; }
+
+        .story-content { 
+            text-align: center; 
+            padding-bottom: 50px;
+        }
+
+        .story-p { 
+            font-family: 'Dancing Script', cursive; font-size: 1.6rem; color: #e0d2b4; 
+            line-height: 1.7; margin-bottom: 40px; text-shadow: 0 1px 1px rgba(0,0,0,0.5);
+        }
+        .story-highlight { color: #ffd700; font-weight: bold; font-size: 1.8rem; display: block; margin-top: 5px; }
+
+        /* --- 4. ROYAUME --- */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+        #kingdom-wrapper { 
+            position: absolute; top: 0; right: 20px; width: 50%; height: 100%; 
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            gap: 40px; pointer-events: none; 
+        }
+        .rank-row { display: flex; justify-content: center; gap: 30px; width: 100%; pointer-events: auto; }
+
+        .medallion {
+            position: relative; background: radial-gradient(circle at 30% 30%, #2c3e50, #000);
+            border: 2px solid #aaa; border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            color: #fff; cursor: pointer; transition: transform 0.3s; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .medallion:hover { transform: scale(1.2) translateY(-5px); z-index: 100; }
+        .name-tag {
+            position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.8); padding: 4px 12px; border-radius: 12px; border: 1px solid #555;
+            font-size: 0.85rem; white-space: nowrap; font-family: 'Mate SC', serif; text-shadow: 0 2px 2px black; font-weight: bold;
+        }
+
+        /* RANGS */
+        .medallion.queen { width: 110px; height: 110px; font-size: 50px; border: 4px solid #ffd700; background: radial-gradient(circle at 30% 30%, #8e44ad, #2c0440); box-shadow: 0 0 50px rgba(255, 215, 0, 0.5); animation: queenPulse 3s infinite alternate; }
+        .medallion.queen::after { content: '👑'; position: absolute; top: -30px; font-size: 35px; animation: floatCrown 2s infinite ease-in-out; }
+        .medallion.minister { width: 90px; height: 90px; font-size: 38px; border: 3px solid #e67e22; background: radial-gradient(circle at 30% 30%, #d35400, #4a2308); }
+        .medallion.steward { width: 85px; height: 85px; font-size: 34px; border: 3px solid #3498db; background: radial-gradient(circle at 30% 30%, #2980b9, #0a2540); }
+        .medallion.knight { width: 75px; height: 75px; font-size: 30px; border: 2px solid #27ae60; background: radial-gradient(circle at 30% 30%, #2ecc71, #093015); }
+
+        @keyframes queenPulse { 0% { box-shadow: 0 0 30px #ffd700; } 100% { box-shadow: 0 0 70px #ffd700, 0 0 20px #fff; } }
+        @keyframes floatCrown { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+        /* --- 5. MODALE & TOAST --- */
+        #msg-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8);
+            width: 550px; background: #1a120b; border: 3px solid #c5a059; padding: 50px; z-index: 200;
+            opacity: 0; pointer-events: none; transition: 0.4s; border-radius: 20px; color: #e0d2b4;
+            box-shadow: 0 0 100px rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; text-align: center;
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+        }
+        #msg-modal.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+        .modal-name { color: #ffd700; font-family: 'Cinzel Decorative', cursive; font-size: 2.5rem; margin: 10px 0; border-bottom: 2px solid rgba(197, 160, 89, 0.5); padding-bottom: 10px;}
+        .modal-text { font-family: 'Dancing Script', cursive; font-size: 1.8rem; line-height: 1.6; min-height: 100px; margin-top: 20px;}
+        .close-btn { margin-top: 30px; padding: 10px 40px; background: transparent; border: 2px solid #c5a059; color: #c5a059; cursor: pointer; border-radius: 30px; transition: 0.3s; font-weight: bold; font-family: 'Mate SC', serif;}
+        .close-btn:hover { background: #c5a059; color: #000; }
+        #toast {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: linear-gradient(90deg, #8e44ad, #c0392b); color: #ffd700; padding: 15px 50px; border-radius: 50px;
+            font-family: 'Cinzel Decorative', cursive; font-size: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.8); border: 2px solid #ffd700;
+            opacity: 0; transition: all 0.5s; z-index: 300; pointer-events: none; text-shadow: 0 2px 4px black;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="intro">
+        <div class="book-cover">
+            <div class="corner tl"></div><div class="corner tr"></div>
+            <div class="corner bl"></div><div class="corner br"></div>
+            <h1 class="intro-title">Le Grimoire DSI</h1>
+            <p style="color:#aaa; margin-bottom:30px; letter-spacing:2px; text-transform:uppercase;">Année 2025 ➜ Vers 2026</p>
+            <button class="start-btn" id="btn-enter">Entrer au Château</button>
+        </div>
+    </div>
+
+    <div id="main-bg"></div>
+    <div id="canvas-container"></div>
+    <div id="toast">🎅 Oyez, Oyez ! Bonnes Fêtes de Fin d'Année ! 🎅</div>
+
+    <div id="story-sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-title">Les Archives</h2>
+        </div>
+        <div class="scrolling-wrapper">
+            <div class="story-content">
+                <p class="story-p">Au sommet de la Tour d'Ivoire, <span class="story-highlight">La Reine Florence</span> contemple son royaume numérique avec sagesse.</p>
+                <p class="story-p">Ses deux Grands Ministres Royaux, <span class="story-highlight">Johann et Christophe</span>, forment un rempart infranchissable contre le chaos et les pannes.</p>
+                <p class="story-p">Juste en dessous, les Intendants Royaux, <span class="story-highlight">Romain et César</span>, assurent la logistique des armées et la stratégie des batailles.</p>
+                <p class="story-p">Tandis que la vaillante Garde Royale, formée d'<span class="story-highlight">Alexis, Christelle, Pierre et Jonathan</span>, protège chaque villageois des dragons et des bugs obscurs.</p>
+                <p class="story-p">Ensemble, ils forment le Cercle des Gardiens.</p>
+                <p class="story-p">L'année 2026 sera leur âge d'or.</p>
+                <p class="story-p">~ Fin du Chapitre ~</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div id="kingdom-wrapper">
+            <div class="rank-row" id="rank-1"></div>
+            <div class="rank-row" id="rank-2"></div>
+            <div class="rank-row" id="rank-3"></div>
+            <div class="rank-row" id="rank-4"></div>
+        </div>
+    </div>
+
+    <div id="msg-modal">
+        <div style="font-size:60px; margin-bottom:10px;" id="m-icon"></div>
+        <div style="color:#888; text-transform:uppercase; letter-spacing:2px; font-size:0.9rem" id="m-role">Role</div>
+        <h2 class="modal-name" id="m-name">Nom</h2>
+        <div class="modal-text" id="m-text">Message...</div>
+        <button class="close-btn" id="close-msg">Fermer</button>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- DONNEES ---
+        const royalCourt = {
+            rank1: [
+                { name: "Florence", role: "La Reine (Responsable DSI)", icon: "👑", color: "#ffd700", msg: "Depuis le trône, je trace la voie vers un avenir technologique radieux pour tout le royaume." }
+            ],
+            rank2: [
+                { name: "Johann", role: "Ministre des Incidents", icon: "⚜️", color: "#e67e22", msg: "Par décret royal, aucun feu ne brûlera nos terres. Je veille sur la tranquillité du domaine." },
+                { name: "Christophe", role: "Ministre des Réseaux", icon: "⚜️", color: "#c0392b", msg: "Les routes invisibles du royaume sont sous ma protection. Aucune intrusion ne sera tolérée." }
+            ],
+            rank3: [
+                { name: "Romain", role: "Intendant du Parc", icon: "🗝️", color: "#3498db", msg: "Les coffres sont pleins et les armes affûtées. Chaque chevalier recevra son équipement." },
+                { name: "César", role: "Intendant Leader", icon: "🗝️", color: "#f1c40f", msg: "L'organisation est la clé de la victoire. En avant pour la gloire de 2026 !" }
+            ],
+            rank4: [
+                { name: "Alexis", role: "Garde - Mage du Code", icon: "🛡️", color: "#9b59b6", msg: "Mes grimoires contiennent les sorts pour dissiper les ténèbres logicielles." },
+                { name: "Christelle", role: "Garde - Fée du Support", icon: "🛡️", color: "#ff9ff3", msg: "Ma magie blanche soigne les maux des villageois avec douceur et rapidité." },
+                { name: "Pierre", role: "Garde Mobile", icon: "🛡️", color: "#2ecc71", msg: "Je chevauche le vent pour porter assistance aux quatre coins du royaume." },
+                { name: "Jonathan", role: "Garde Technicien", icon: "🛡️", color: "#1abc9c", msg: "Mon marteau de forge répare ce qui est brisé. La solidité est ma devise." }
+            ]
+        };
+
+        function createMedallion(member, type) {
+            const el = document.createElement('div'); el.className = `medallion ${type}`;
+            el.innerHTML = `${member.icon}<div class="name-tag">${member.name}</div>`;
+            el.onclick = () => openModal(member); return el;
+        }
+        royalCourt.rank1.forEach(m => document.getElementById('rank-1').appendChild(createMedallion(m, 'queen')));
+        royalCourt.rank2.forEach(m => document.getElementById('rank-2').appendChild(createMedallion(m, 'minister')));
+        royalCourt.rank3.forEach(m => document.getElementById('rank-3').appendChild(createMedallion(m, 'steward')));
+        royalCourt.rank4.forEach(m => document.getElementById('rank-4').appendChild(createMedallion(m, 'knight')));
+
+        // NEIGE INTRO
+        function createIntroSnow() {
+            const container = document.getElementById('intro');
+            for(let i=0; i<80; i++) {
+                const flake = document.createElement('div'); flake.className = 'intro-snow';
+                flake.style.left = Math.random() * 100 + '%';
+                flake.style.animationDuration = Math.random() * 5 + 3 + 's';
+                flake.style.opacity = Math.random() * 0.7 + 0.3;
+                flake.innerText = '❄'; flake.style.fontSize = Math.random() * 20 + 10 + 'px';
+                container.appendChild(flake);
+            }
+        }
+        createIntroSnow();
+
+        // 3D SCENE
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene(); 
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 35; camera.position.y = 5;
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.autoRotate = true; controls.autoRotateSpeed = 0.5; controls.enableZoom = false;
+        controls.target.set(-10, 0, 0); 
+
+        const treeGroup = new THREE.Group(); treeGroup.position.x = -10; scene.add(treeGroup);
+
+        const particlesCount = 4500; const pos = new Float32Array(particlesCount * 3); const cols = new Float32Array(particlesCount * 3);
+        const h = 30, rBase = 12;
+        const c1=new THREE.Color(0xffd700), c2=new THREE.Color(0x8e44ad), c3=new THREE.Color(0xffffff);
+        for(let i=0; i<particlesCount; i++) {
+            const y = Math.random()*h - h/2; const p = 1 - ((y+h/2)/h); const r = p*rBase; const a = y*3 + Math.random()*Math.PI*2; 
+            pos[i*3] = Math.cos(a)*r; pos[i*3+1] = y; pos[i*3+2] = Math.sin(a)*r;
+            const cc = Math.random()>0.5 ? c1 : (Math.random()>0.5 ? c2 : c3);
+            cols[i*3]=cc.r; cols[i*3+1]=cc.g; cols[i*3+2]=cc.b;
+        }
+        const sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/spark1.png');
+        const treeGeo = new THREE.BufferGeometry(); treeGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); treeGeo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+        const treeMat = new THREE.PointsMaterial({size:0.6, map:sprite, vertexColors:true, blending:THREE.AdditiveBlending, depthWrite:false, transparent:true, opacity:0.8});
+        treeGroup.add(new THREE.Points(treeGeo, treeMat));
+        const star = new THREE.Mesh(new THREE.OctahedronGeometry(2,0), new THREE.MeshBasicMaterial({color:0xffd700}));
+        star.position.y = h/2 + 1; treeGroup.add(star);
+
+        function createGift(x, y, z, cBox, cRib) {
+            const grp = new THREE.Group();
+            grp.add(new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), new THREE.MeshStandardMaterial({color:cBox})));
+            const rMat = new THREE.MeshStandardMaterial({color:cRib});
+            grp.add(new THREE.Mesh(new THREE.BoxGeometry(2.6,2.6,0.5), rMat)); grp.add(new THREE.Mesh(new THREE.BoxGeometry(0.5,2.6,2.6), rMat));
+            const bow = new THREE.Mesh(new THREE.TorusKnotGeometry(0.6,0.15,64,8), rMat); bow.position.y=1.3; grp.add(bow);
+            grp.position.set(x,y,z); grp.rotation.y = Math.random(); return grp;
+        }
+        const colsGift = [{b:0x8e44ad, r:0xffd700}, {b:0x2980b9, r:0xffffff}, {b:0xc0392b, r:0xffd700}];
+        for(let i=0; i<8; i++) { const c = colsGift[i%3]; const a = i; const rad = rBase+2; treeGroup.add(createGift(Math.cos(a)*rad, -h/2+1.25, Math.sin(a)*rad, c.b, c.r)); }
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.6); scene.add(ambLight); const pLight = new THREE.PointLight(0xffd700, 1, 50); pLight.position.set(5,5,5); treeGroup.add(pLight);
+
+        // NEIGE SCENE 3D
+        const snowCnt=2500; const snowPos=new Float32Array(snowCnt*3);
+        for(let i=0;i<snowCnt;i++){ snowPos[i*3]=(Math.random()-0.5)*150; snowPos[i*3+1]=Math.random()*100-50; snowPos[i*3+2]=(Math.random()-0.5)*150; }
+        const snowGeo=new THREE.BufferGeometry(); snowGeo.setAttribute('position',new THREE.BufferAttribute(snowPos,3));
+        const snowMat=new THREE.PointsMaterial({color:0xffffff, size:0.5, transparent:true, opacity:0.8, map:sprite, blending:THREE.AdditiveBlending, depthWrite:false});
+        scene.add(new THREE.Points(snowGeo, snowMat));
+
+        const modal = document.getElementById('msg-modal'), toast = document.getElementById('toast'), txtBox = document.getElementById('m-text');
+        function openModal(m) {
+            document.getElementById('m-name').innerText = m.name; document.getElementById('m-role').innerText = m.role; document.getElementById('m-icon').innerText = m.icon;
+            txtBox.innerText = ""; let idx=0; const timer = setInterval(()=>{ txtBox.textContent += m.msg.charAt(idx); idx++; if(idx>=m.msg.length) clearInterval(timer); }, 30);
+            modal.classList.add('active');
+        }
+        document.getElementById('close-msg').onclick = () => { modal.classList.remove('active'); toast.classList.add('show'); setTimeout(() => { toast.classList.remove('show'); }, 4000); };
+
+        function animate() {
+            requestAnimationFrame(animate); treeGroup.rotation.y += 0.003; star.rotation.y -= 0.02;
+            const sp = snowGeo.attributes.position.array; for(let i=0; i<snowCnt; i++) { sp[i*3+1]-=0.08; if(sp[i*3+1]<-50) sp[i*3+1]=50; }
+            snowGeo.attributes.position.needsUpdate = true; controls.update(); renderer.render(scene, camera);
+        }
+        const audio = new Audio('https://actions.google.com/sounds/v1/holidays/jingle_bells_jazz_style.ogg'); audio.loop = true; audio.volume = 0.5;
+        document.getElementById('btn-enter').onclick = () => { document.getElementById('intro').style.opacity = 0; setTimeout(() => document.getElementById('intro').remove(), 1500); audio.play().catch(e=>console.log(e)); animate(); };
+        window.onresize = () => { camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); };
+    </script>
+</body>
+</html>
